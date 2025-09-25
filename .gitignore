@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+serena/.venv/
+zen-mcp-server/.venv/
+zen-mcp-server/.zen_venv/
+
+# IDEs and editors
+.vscode/
+.idea/
+.project
+.classpath
+.settings/
+*.sublime-workspace
+.gemini/
+.serena/
+
+# Secrets
+.env
+*.env
+
+# Local Data
+vibecoding/mariadb/data/
+vibecoding/postgres/data/
+
+# Logs
+*.log
+logs/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
