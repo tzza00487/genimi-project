@@ -1,42 +1,23 @@
-# 資料庫遷移專案進度摘要
+# 資料庫遷移進度摘要 (2025-09-30)
 
-**儲存時間:** 2025年9月12日 星期五
+## 1. 當前目標
 
-## 目前進度概覽
+為了解決先前主要資料被誤刪的問題，當前的核心目標是將資料從備用的 MariaDB 資料庫遷移至新建的 PostgreSQL 資料庫中，以便繼續向量搜尋專案的開發。
 
-*   **Docker 環境狀態:** 所有服務 (MariaDB, PostgreSQL, FastAPI 遷移工具) 均已啟動並運行中。
-    *   您可以使用 `docker ps -a` 命令來確認。
-*   **資料庫結構 (Schema) 遷移:**
-    *   已成功將 MariaDB 的資料表結構遷移到 PostgreSQL。
-    *   當您訪問 `http://localhost:8000/migrate_schema` 時，網頁顯示的「relation "xxx" already exists」訊息是正常的，表示結構已經存在。
-*   **資料 (Data) 遷移:**
-    *   您已觸發了所有資料的遷移 (`http://localhost:8000/migrate_all_data`)。
-    *   這是一個長時間運行的過程，目前正在後台進行中。
-    *   **重要提示:** 由於資料量龐大，網頁瀏覽器會一直顯示「轉圈圈」或「沒有回應」，這是正常的。
+## 2. 已完成的進度
 
-## 如何查看資料遷移進度
+1.  **確認新資料來源**：您已確認有一份 MariaDB 資料可作為新的資料來源。
+2.  **找到連線資訊**：透過搜尋專案檔案，在 `vibecoding/fastapi/app/reset_and_migrate.py` 中成功找到了 MariaDB 的完整連線設定 (主機、端口、使用者、密碼、資料庫名稱)。
+3.  **成功連線資料庫**：已使用上述資訊，成功透過 `mysql-smart` 工具連接到 MariaDB 資料庫 (`tc_search_v15`)。
 
-請您回到黑色「命令提示字元」視窗，輸入以下命令來查看即時進度：
+## 3. 當前中斷點
 
-```bash
-docker logs -f fastapi-migration-app
-```
+1.  **工具執行失敗**：在嘗試使用 `mysql-smart` 的 `list_tables()` 功能獲取資料表清單時，工具因 SQL 版本不相容而執行失敗。
+2.  **提出解決方案**：我提出了一個替代方案，即直接執行原生 SQL 指令 `SHOW TABLES;` 來繞過工具的限制。
+3.  **使用者暫停**：在執行替代方案的 `execute_sql(sql="SHOW TABLES;")` 指令前，您指示暫停任務。
 
-*   您會看到類似 `Migrated X rows to Y. Total: Z` 的訊息，表示資料正在分批遷移。
-*   請觀察日誌，直到所有表格的資料都顯示遷移完成。
+## 4. 下一步行動 (恢復時執行)
 
-## 下一步操作 (當您回來時)
+當我們回來繼續時，要執行的**第一個動作**就是：
 
-1.  **確認資料遷移完成:**
-    *   持續觀察 `docker logs -f fastapi-migration-app` 的輸出。
-    *   當日誌不再顯示新的遷移進度訊息，並且最後的訊息是 FastAPI 應用程式的啟動訊息時，表示資料遷移已完成。
-    *   **請注意:** `asset` 表格的資料遷移在上次嘗試時可能因為欄位名稱引用問題而失敗，需要特別留意其日誌。
-
-2.  **驗證資料 (第七步):**
-    *   當資料遷移完成後，您需要使用 DBeaver 等工具連接到 PostgreSQL 資料庫 (`localhost:5432`, `postgres`, `tc94800552`, 資料庫 `tc_search_v15`) 來驗證資料是否完整。
-    *   詳細步驟請參考 `db_migration_plan.md` 檔案中的「3.1 逐步遷移計畫」和「3.2 驗證和測試策略」。
-
-3.  **關閉服務 (第八步):**
-    *   當所有工作完成後，請在命令提示字元中執行 `docker compose -f vibecoding/docker-compose.yml down` 來關閉所有服務。
-
----
+> **執行 `execute_sql(sql="SHOW TABLES;")` 指令，以獲取 MariaDB 中的資料表清單，並繼續進行資料庫結構分析。**

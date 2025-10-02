@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>慈濟數位典藏PostgreSQL</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #0056b3;
+        }
+        .search-container {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 2rem;
+        }
+        #searchInput {
+            width: calc(100% - 100px);
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+        }
+        #searchButton {
+            width: 90px;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #searchButton:hover {
+            background-color: #0056b3;
+        }
+        #results-container {
+            width: 100%;
+            max-width: 800px;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 0.8rem;
+            text-align: left;
+            word-wrap: break-word; /* Allow long words to break */
+            white-space: normal; /* Allow text to wrap */
+        }
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+        tr:nth-child(even) {background-color: #f9f9f9;}
+        tr:hover {background-color: #f1f1f1;}
+    </style>
+</head>
+<body>
+
+    <h1>慈濟數位典藏PostgreSQL</h1>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="在 title 和 content 中搜尋關鍵字...">
+        <button id="searchButton">搜尋</button>
+    </div>
+
+    <div id="results-container">
+        <p>請輸入關鍵字進行搜尋。</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const resultsContainer = document.getElementById('results-container');
+
+            const performSearch = () => {
+                const keyword = searchInput.value.trim();
+                if (!keyword) {
+                    resultsContainer.innerHTML = '<p>請輸入關鍵字。</p>';
+                    return;
+                }
+
+                resultsContainer.innerHTML = '<p>正在搜尋中...</p>';
+
+                fetch(`http://localhost:8000/search?keyword=${encodeURIComponent(keyword)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP 錯誤！狀態: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        resultsContainer.innerHTML = ''; // 清空結果區域
+
+                        if (data.length === 0) {
+                            resultsContainer.innerHTML = '<p>找不到符合的結果。</p>';
+                            return;
+                        }
+
+                        if (data[0] && data[0].error) {
+                            resultsContainer.innerHTML = `<p style="color: red;">查詢時發生錯誤: ${data[0].error}</p>`;
+                            return;
+                        }
+
+                        const table = document.createElement('table');
+                        const thead = document.createElement('thead');
+                        const tbody = document.createElement('tbody');
+                        const headerRow = document.createElement('tr');
+
+                        // Explicitly define headers for better control and to ensure all relevant columns are shown
+                        const displayHeaders = [
+                            { key: 'asset_id', text: 'ID' },
+                            { key: 'TitleType', text: '類型' },
+                            { key: 'WebTitle', text: '網頁標題' },
+                            { key: 'FilmDescription', text: '影片描述' },
+                            { key: 'StoryContents', text: '文稿內容' },
+                            { key: 'WebUrl', text: '網頁連結' },
+                            { key: 'created_at', text: '建立時間' }
+                        ];
+
+                        displayHeaders.forEach(headerInfo => {
+                            const th = document.createElement('th');
+                            th.textContent = headerInfo.text;
+                            headerRow.appendChild(th);
+                        });
+                        thead.appendChild(headerRow);
+
+                        // 建立資料列
+                        data.forEach(rowData => {
+                            const row = document.createElement('tr');
+                            displayHeaders.forEach(headerInfo => {
+                                const cell = document.createElement('td');
+                                // Handle potential null values and format datetime objects
+                                let cellContent = rowData[headerInfo.key];
+                                if (cellContent === null || cellContent === undefined) {
+                                    cell.textContent = '';
+                                } else if (headerInfo.key === 'WebUrl' && cellContent) {
+                                    const link = document.createElement('a');
+                                    link.href = cellContent;
+                                    link.textContent = cellContent;
+                                    link.target = "_blank"; // Open in new tab
+                                    cell.appendChild(link);
+                                } else if (headerInfo.key === 'created_at' && cellContent instanceof Date) {
+                                    cell.textContent = cellContent.toLocaleString();
+                                } else {
+                                    cell.textContent = cellContent;
+                                }
+                                row.appendChild(cell);
+                            });
+                            tbody.appendChild(row);
+                        });
+
+                        table.appendChild(thead);
+                        table.appendChild(tbody);
+                        resultsContainer.appendChild(table);
+                    })
+                    .catch(error => {
+                        console.error('Fetch Error:', error);
+                        resultsContainer.innerHTML = `<p style="color: red;">無法連接到後端 API。請確認 API 伺服器是否已在 http://localhost:8000 運行。<br>${error.message}</p>`;
+                    });
+            };
+
+            searchButton.addEventListener('click', performSearch);
+            searchInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    performSearch();
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

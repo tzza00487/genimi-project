@@ -1,47 +1,35 @@
 version: '3.8'
 
 services:
-  mariadb:
-    image: mariadb:10.6.23-jammy
-    container_name: mariadb-container
-    ports:
-      - "3306:3306"
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: vibecoding-postgres
     environment:
-      MYSQL_ROOT_PASSWORD: "tc94800552"
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: vectordb
     volumes:
-      - ./mariadb/data/mysql:/var/lib/mysql
-      - ./mariadb/data/50-server.cnf:/etc/mysql/mariadb.conf.d/50-server.cnf
-    restart: unless-stopped
-    networks:
-      - migration_network
-
-  postgresql:
-    image: postgres:15
-    container_name: postgresql-container
+      - ./postgres/data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_PASSWORD: "tc94800552"
-      POSTGRES_USER: "postgres"
-    volumes:
-      - ./postgres/data/data:/var/lib/postgresql/data
-    restart: unless-stopped
-    networks:
-      - migration_network
+      - "5433:5432"
+    restart: always
 
-  fastapi_app:
-    build: ./fastapi
-    container_name: fastapi-migration-app
+  api:
+    build:
+      context: ./fastapi
+    container_name: vibecoding-api
     ports:
       - "8000:8000"
-    volumes:
-      - ./fastapi/app:/app
-    networks:
-      - migration_network
     depends_on:
-      - mariadb
-      - postgresql
+      - postgres
+    restart: always
 
-networks:
-  migration_network:
-    driver: bridge
+  frontend:
+    build:
+      context: ./nginx
+    container_name: vibecoding-frontend
+    ports:
+      - "8080:80" # Use 8080 on host to avoid conflict with other services on 80
+    depends_on:
+      - api
+    restart: always

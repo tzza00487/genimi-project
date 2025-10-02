@@ -1,4 +1,6 @@
 fastapi
-uvicorn
-mysql-connector-python
-psycopg2-binary
+uvicorn[standard]
+sqlalchemy
+asyncpg
+pgvector
+httpx
