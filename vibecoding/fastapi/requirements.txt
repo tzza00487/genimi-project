@@ -4,3 +4,4 @@ sqlalchemy
 asyncpg
 pgvector
 httpx
+psycopg2-binary

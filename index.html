@@ -130,15 +130,13 @@
                         const tbody = document.createElement('tbody');
                         const headerRow = document.createElement('tr');
 
-                        // Explicitly define headers for better control and to ensure all relevant columns are shown
                         const displayHeaders = [
                             { key: 'asset_id', text: 'ID' },
-                            { key: 'TitleType', text: '類型' },
-                            { key: 'WebTitle', text: '網頁標題' },
-                            { key: 'FilmDescription', text: '影片描述' },
+                            { key: 'EventName', text: '事件名稱' },
+                            { key: 'StoryTitle', text: '文稿標題' },
                             { key: 'StoryContents', text: '文稿內容' },
-                            { key: 'WebUrl', text: '網頁連結' },
-                            { key: 'created_at', text: '建立時間' }
+                            { key: 'category', text: '類別' },
+                            { key: 'FilmDescription', text: '圖說' }
                         ];
 
                         displayHeaders.forEach(headerInfo => {
