@@ -105,7 +105,7 @@
 
                 resultsContainer.innerHTML = '<p>正在搜尋中...</p>';
 
-                fetch(`http://localhost:8000/search?keyword=${encodeURIComponent(keyword)}`)
+                fetch(`http://localhost:8080/search?keyword=${encodeURIComponent(keyword)}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`HTTP 錯誤！狀態: ${response.status}`);
@@ -113,6 +113,7 @@
                         return response.json();
                     })
                     .then(data => {
+                        console.log(data); // Log the data to the console for debugging
                         resultsContainer.innerHTML = ''; // 清空結果區域
 
                         if (data.length === 0) {
@@ -132,11 +133,11 @@
 
                         const displayHeaders = [
                             { key: 'asset_id', text: 'ID' },
-                            { key: 'EventName', text: '事件名稱' },
-                            { key: 'StoryTitle', text: '文稿標題' },
-                            { key: 'StoryContents', text: '文稿內容' },
+                            { key: 'eventname', text: '事件名稱' },
+                            { key: 'storytitle', text: '文稿標題' },
+                            { key: 'storycontents', text: '文稿內容' },
                             { key: 'category', text: '類別' },
-                            { key: 'FilmDescription', text: '圖說' }
+                            { key: 'filmdescription', text: '圖說' }
                         ];
 
                         displayHeaders.forEach(headerInfo => {
